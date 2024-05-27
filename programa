@@ -1,0 +1,83 @@
+#include <Arduino.h>
+
+#define MOTOR_PIN D1 
+#define POTENTIOMETER_PIN A0 
+#define LED1_PIN D2 
+#define LED2_PIN D3 
+#define LED3_PIN D4 
+#define LED4_PIN D5 
+#define LED5_PIN D6 
+#define BUTTON_PIN D7 
+
+
+bool motorRunning = false; 
+unsigned long previousMillis = 0; 
+const long interval = 200; 
+unsigned long startMillis = 0; 
+const unsigned long timeout = 90000; 
+
+void setup() {
+  pinMode(MOTOR_PIN, OUTPUT);
+  pinMode(POTENTIOMETER_PIN, INPUT);
+  pinMode(LED1_PIN, OUTPUT);
+  pinMode(LED2_PIN, OUTPUT);
+  pinMode(LED3_PIN, OUTPUT);
+  pinMode(LED4_PIN, OUTPUT);
+  pinMode(LED5_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  for (int j = 0; j < 3; j++) {
+    digitalWrite(LED1_PIN, HIGH);
+    digitalWrite(LED2_PIN, HIGH);
+    digitalWrite(LED3_PIN, HIGH);
+    digitalWrite(LED4_PIN, HIGH);
+    digitalWrite(LED5_PIN, HIGH);
+    delay(100);
+    digitalWrite(LED1_PIN, LOW);
+    digitalWrite(LED2_PIN, LOW);
+    digitalWrite(LED3_PIN, LOW);
+    digitalWrite(LED4_PIN, LOW);
+    digitalWrite(LED5_PIN, LOW);
+    delay(100);
+  }
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  if (digitalRead(BUTTON_PIN) == LOW) {
+    motorRunning = !motorRunning;
+    if (motorRunning) {
+      startMillis = millis(); 
+      Serial.println("Motor iniciado");
+    } else {
+      Serial.println("Motor parado");
+    }
+    delay(200);
+  }
+
+  int potValue = analogRead(POTENTIOMETER_PIN);
+  int motorSpeed = map(potValue, 0, 1023, 0, 255);
+  analogWrite(MOTOR_PIN, motorSpeed);
+
+  unsigned long currentMillis = millis();
+  if (motorRunning && currentMillis - startMillis >= timeout) {
+    motorRunning = false; // Parar el motor
+    Serial.println("Motor parado por timeout");
+  }
+
+  int ledLevel = map(potValue, 0, 1023, 0, 5); 
+  digitalWrite(LED1_PIN, ledLevel >= 1 ? HIGH : LOW);
+  digitalWrite(LED2_PIN, ledLevel >= 2 ? HIGH : LOW);
+  digitalWrite(LED3_PIN, ledLevel >= 3 ? HIGH : LOW);
+  digitalWrite(LED4_PIN, ledLevel >= 4 ? HIGH : LOW);
+  digitalWrite(LED5_PIN, ledLevel >= 5 ? HIGH : LOW);
+
+  Serial.print("Velocidad del motor: ");
+  Serial.println(motorSpeed);
+  Serial.print("Nivel de los LEDs: ");
+  Serial.println(ledLevel);
+
+  delay(interval);
+}
+
